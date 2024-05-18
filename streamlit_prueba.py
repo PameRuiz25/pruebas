@@ -1,4 +1,4 @@
 import streamlit as st
 
-print("Streamlit is working!")
+st.write("Streamlit is working!")
 
