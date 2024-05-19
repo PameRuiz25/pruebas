@@ -136,13 +136,13 @@ with col1:
 # Assuming df_filtered contains a column 'Fecha_de_atención'
 with col2:
     if not df_filtered.empty:
-        consultations_by_year = df_filtered.groupby('year').size().reset_index(name='consultations')
+        consultations_by_year = df_filtered.groupby('year').size().reset_index(name='registros')
         line_chart = alt.Chart(consultations_by_year).mark_line(point=True).encode(
             x='year:O',
-            y='consultations:Q'
+            y='registros:Q'
         ).properties(
-            title='Consultations by Year',
-            width=300,
+            title='Resgirtos por Año',
+            width=500,
             height=300
         )
         st.altair_chart(line_chart)
