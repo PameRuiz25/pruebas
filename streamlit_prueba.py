@@ -22,7 +22,7 @@ alt.themes.enable("dark")
 # ----------------------------------------------------------------------------------------------------------------------
 # 3. Data Loading
 # PRUEBA. DISPLAY DASHBOARD
-url = 'https://raw.githubusercontent.com/PameRuiz25/pruebas/main/data.csv'
+url = 'https://raw.githubusercontent.com/PameRuiz25/pruebas/main/kobo_data.csv'
 response = requests.get(url)
 
 if response.status_code == 200:
