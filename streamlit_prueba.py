@@ -1006,7 +1006,7 @@ def dashboard():
         st.markdown("""
             <div style="background-color:#1f77b4; padding:10px; border-radius:5px; margin-top:10px; margin-bottom:20px;">
                 <h2 style="color:white; text-align:center; margin:0;">CASA MONARCA</h2>
-                <h3 style="color:white; text-align:center; margin:0;">Atención Mensual</h3>
+                <h3 style="color:white; text-align:center; margin:0;">Atención Humanitaria</h3>
             </div>
         """, unsafe_allow_html=True)
 
@@ -1083,8 +1083,91 @@ def dashboard():
                 filtered_df = filtered_df
 
             
-                
+        st.markdown("### Total de personas atendidas: {}".format(len(filtered_df)))
 
+
+
+        # GRÁFICOS BÁSICOS (TEMPORALES)
+        # Create columns
+        col1, col2 = st.columns(2)
+
+
+        with col1:
+                st.markdown('##### Registros por Año')
+                consultations_by_year = filtered_df.groupby('year').size().reset_index(name='registros')
+                line_chart = alt.Chart(consultations_by_year).mark_line(point=True).encode(
+                    x=alt.X('year:O', title="año", axis=alt.Axis(labelAngle=0)),
+                    y='registros:Q'
+                ).properties(
+                    width=450,
+                    height=350
+                )
+                text = line_chart.mark_text(
+                    align='center',
+                    baseline='bottom',
+                    dy=-5  # Ajustar la posición vertical del texto para mejor visibilidad
+                ).encode(
+                    text='registros:Q'
+                )
+                chart = (line_chart + text)
+                st.altair_chart(chart)
+
+
+
+
+
+        # 6.2 Display a line chart for the number of consultations by year
+        # Assuming df_filtered contains a column 'Fecha_de_atención'
+        with col2:
+            st.markdown('##### Registros por Mes')
+            consultations_by_month = filtered_df.groupby('month').size().reset_index(name='registros')
+            line_chart = alt.Chart(consultations_by_month).mark_line(point=True).encode(
+                x=alt.X('month', title='Mes', axis=alt.Axis(format='d')),  
+                y=alt.Y('registros:Q', title='Registros')
+            ).properties(
+                width=450,
+                height=350
+            )
+
+            # Añadir etiquetas de texto
+            text = line_chart.mark_text(
+                align='left',
+                baseline='middle',
+                dx=5,  # Ajuste horizontal
+                dy=-5  # Ajuste vertical
+            ).encode(
+                text='registros:Q',  # Usar el valor de 'registros' como texto
+                x='month',  # Posicionar la etiqueta en el mismo eje x que los puntos
+                y='registros:Q',  # Posicionar la etiqueta en la misma altura que los puntos
+            )
+
+            chart_with_labels = line_chart + text
+            st.altair_chart(chart_with_labels)
+
+
+        # GRÁFICOS BÁSICOS (DEMOGRÁFICOS)
+
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            st.markdown('##### Población por Sexo')
+            tipo_poblacion_counts = filtered_df['Sexo'].value_counts().reset_index()
+            tipo_poblacion_counts.columns = ['Sexo', 'Count']
+            fig = px.pie(tipo_poblacion_counts, values='Count', names='Sexo', width=300, height=350, color_discrete_sequence=color_scale_10)
+            st.plotly_chart(fig)
+
+        with col2:
+            st.markdown('##### Población por Nacionalidad')
+            tipo_poblacion_counts = filtered_df['Nacionalidad'].value_counts().reset_index()
+            tipo_poblacion_counts.columns = ['Nacionalidad', 'Count']
+            fig = px.pie(tipo_poblacion_counts, values='Count', names='Nacionalidad', width=300, height=350, color_discrete_sequence=color_scale_10)
+            st.plotly_chart(fig)
+        with col3:
+            st.markdown('##### Población por Tipo de Población')
+            tipo_poblacion_counts = filtered_df['Tipo_de_poblacion'].value_counts().reset_index()
+            tipo_poblacion_counts.columns = ['Tipo_de_poblacion', 'Count']
+            fig = px.pie(tipo_poblacion_counts, values='Count', names='Tipo_de_poblacion', width=300, height=350, color_discrete_sequence=color_scale_10)
+            st.plotly_chart(fig)
 
 
         
@@ -1130,15 +1213,107 @@ def dashboard():
         # Contar valores
         counts = {col: filtered_df[col].sum() for col in bit_columns}
 
-        st.markdown("### Total de personas atendidas: {}".format(len(filtered_df)))
-
         st.write("Conteos de registros por cada columna:")
         counts_df = pd.DataFrame(list(counts.items()), columns=['Columna', 'Conteo'])
         st.table(counts_df)
 
 
 
+        
 
+
+
+
+
+
+        # Display filtered_df
+        st.write("Datos filtrados:")
+        st.write(filtered_df)
+
+
+
+
+    def page3():
+        st.markdown("""
+            <div style="background-color:#1f77b4; padding:10px; border-radius:5px; margin-top:10px; margin-bottom:20px;">
+                <h2 style="color:white; text-align:center; margin:0;">CASA MONARCA</h2>
+                <h3 style="color:white; text-align:center; margin:0;">Atención Legal</h3>
+            </div>
+        """, unsafe_allow_html=True)
+
+
+
+
+
+        url = 'https://raw.githubusercontent.com/PameRuiz25/pruebas/main/atencion_data.csv'
+        response = requests.get(url)
+
+        if response.status_code == 200:
+            df = pd.read_csv(StringIO(response.text))
+        else:
+            st.write("Failed to load data from GitHub.")
+        # ----------------------------------------------------------------------------------------------------------------------
+
+
+        # 4. Data Processing
+        # add a new column for year and month
+        df['year'] = pd.DatetimeIndex(df['Fecha_de_recepcion']).year
+        df['month'] = pd.DatetimeIndex(df['Fecha_de_recepcion']).month
+
+
+
+
+        with st.sidebar:
+            st.markdown("## Filtros")
+            year_values = df.year.unique()
+            sorted_year_values = sorted([m for m in year_values if m is not None])
+            year_list = [None] + sorted_year_values  # Add None as the default option
+            selected_year = st.selectbox('Año de consulta', year_list)
+
+            month_values = df.month.unique()
+            sorted_month_values = sorted([m for m in month_values if m is not None])
+            month_list = [None] + sorted_month_values  # Add None as the default option
+            selected_month = st.selectbox('Mes de consulta', month_list)
+
+            population_list = [None] + sorted(df['Tipo_de_poblacion'].unique())
+            selected_population = st.selectbox('Tipo de población', population_list)
+
+            sexo_list = [None] + sorted(df['Sexo'].unique())
+            selected_sexo = st.selectbox('Sexo', sexo_list)
+
+            nacionalidad_list = [None] + sorted(df['Nacionalidad'].unique())
+            selected_nacionalidad = st.selectbox('Nacionalidad', nacionalidad_list)
+
+            age_range = st.slider("Rango de edad:", min_value=0, max_value=100, value=(0, 100), step=1)
+            df = df[(df['Edad'] >= age_range[0]) & (df['Edad'] <= age_range[1])]
+
+
+            if selected_year is not None:
+                filtered_df = df[df['year'] == selected_year]
+            else:
+                filtered_df = df
+            
+            if selected_month is not None:
+                filtered_df = filtered_df[filtered_df['month'] == selected_month]
+            else:
+                filtered_df = filtered_df
+            
+            if selected_population is not None:
+                filtered_df = filtered_df[filtered_df['Tipo_de_población'] == selected_population]
+            else:
+                filtered_df = filtered_df
+
+            if selected_sexo is not None:
+                filtered_df = filtered_df[filtered_df['Sexo'] == selected_sexo]
+            else:
+                filtered_df = filtered_df
+
+            if selected_nacionalidad is not None:
+                filtered_df = filtered_df[filtered_df['Nacionalidad'] == selected_nacionalidad]
+            else:
+                filtered_df = filtered_df
+
+        
 
 
 
@@ -1159,15 +1334,17 @@ def dashboard():
     # Sidebar navigation without any default selection
     page = st.sidebar.radio(
         "PÁGINA",
-        ("Kobo", "Atención Mensual"),
+        ("Kobo", "Atención Humanitaria", "Atención Legal"),
         index=None
     )
 
     # Display the selected page
     if page == "Kobo":
         page1()
-    elif page == "Atención Mensual":
+    elif page == "Atención Humanitaria":
         page2()
+    elif page == "Atención Legal":
+        page3()
     
 
 
