@@ -1245,7 +1245,7 @@ def dashboard():
 
 
 
-        url = 'https://raw.githubusercontent.com/PameRuiz25/pruebas/main/atencion_data.csv'
+        url = 'https://raw.githubusercontent.com/PameRuiz25/pruebas/main/output_legal.csv'
         response = requests.get(url)
 
         if response.status_code == 200:
@@ -1255,16 +1255,23 @@ def dashboard():
         # ----------------------------------------------------------------------------------------------------------------------
 
 
+
+
         # 4. Data Processing
         # add a new column for year and month
-        df['year'] = pd.DatetimeIndex(df['Fecha_de_recepcion']).year
-        df['month'] = pd.DatetimeIndex(df['Fecha_de_recepcion']).month
+        df['year'] = pd.DatetimeIndex(df['Fecha_de_registro']).year
+        df['month'] = pd.DatetimeIndex(df['Fecha_de_registro']).month
 
 
 
 
         with st.sidebar:
             st.markdown("## Filtros")
+
+            population_list = [None] + sorted(df['Base'].unique())
+            selected_base = st.selectbox('Base', population_list)
+
+
             year_values = df.year.unique()
             sorted_year_values = sorted([m for m in year_values if m is not None])
             year_list = [None] + sorted_year_values  # Add None as the default option
@@ -1292,6 +1299,11 @@ def dashboard():
                 filtered_df = df[df['year'] == selected_year]
             else:
                 filtered_df = df
+
+            if selected_base is not None:
+                filtered_df = filtered_df[filtered_df['Base'] == selected_base]
+            else:
+                filtered_df = filtered_df
             
             if selected_month is not None:
                 filtered_df = filtered_df[filtered_df['month'] == selected_month]
@@ -1315,6 +1327,9 @@ def dashboard():
 
         
 
+        st.write("### Total de personas atendidas: {}".format(len(filtered_df)))
+
+        st.write(filtered_df)
 
 
 
