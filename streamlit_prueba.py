@@ -1093,7 +1093,7 @@ def dashboard():
 
 
         with col1:
-                st.markdown('##### Registros por Año')
+                st.markdown('##### Atención por Año')
                 consultations_by_year = filtered_df.groupby('year').size().reset_index(name='registros')
                 line_chart = alt.Chart(consultations_by_year).mark_line(point=True).encode(
                     x=alt.X('year:O', title="año", axis=alt.Axis(labelAngle=0)),
@@ -1119,11 +1119,11 @@ def dashboard():
         # 6.2 Display a line chart for the number of consultations by year
         # Assuming df_filtered contains a column 'Fecha_de_atención'
         with col2:
-            st.markdown('##### Registros por Mes')
+            st.markdown('##### Atención por Mes')
             consultations_by_month = filtered_df.groupby('month').size().reset_index(name='registros')
             line_chart = alt.Chart(consultations_by_month).mark_line(point=True).encode(
                 x=alt.X('month', title='Mes', axis=alt.Axis(format='d')),  
-                y=alt.Y('registros:Q', title='Registros')
+                y=alt.Y('registros:Q', title='Atención')
             ).properties(
                 width=450,
                 height=350
@@ -1226,13 +1226,6 @@ def dashboard():
 
 
 
-        # Display filtered_df
-        st.write("Datos filtrados:")
-        st.write(filtered_df)
-
-
-
-
     def page3():
         st.markdown("""
             <div style="background-color:#1f77b4; padding:10px; border-radius:5px; margin-top:10px; margin-bottom:20px;">
@@ -1293,6 +1286,9 @@ def dashboard():
 
             age_range = st.slider("Rango de edad:", min_value=0, max_value=100, value=(0, 100), step=1)
             df = df[(df['Edad'] >= age_range[0]) & (df['Edad'] <= age_range[1])]
+            
+            tipo_de_atencion_list = st.selectbox('Tipo de Atención', ['None', 'Primera vez', 'Seguimiento'])
+            atencion = df[df['Tipo_de_atencion'] == tipo_de_atencion_list]
 
 
             if selected_year is not None:
@@ -1325,11 +1321,327 @@ def dashboard():
             else:
                 filtered_df = filtered_df
 
-        
+            if tipo_de_atencion_list != 'None':
+                filtered_df = filtered_df[filtered_df['Tipo_de_atencion'] == tipo_de_atencion_list]
+            else:
+                filtered_df = filtered_df
+
+
+
 
         st.write("### Total de personas atendidas: {}".format(len(filtered_df)))
 
-        st.write(filtered_df)
+
+        # GRÁFICOS BÁSICOS (TEMPORALES)
+        # Create columns
+        col1, col2 = st.columns(2)
+
+
+        with col1:
+                st.markdown('##### Atención por Año')
+                consultations_by_year = filtered_df.groupby('year').size().reset_index(name='registros')
+                line_chart = alt.Chart(consultations_by_year).mark_line(point=True).encode(
+                    x=alt.X('year:O', title="año", axis=alt.Axis(labelAngle=0)),
+                    y='registros:Q'
+                ).properties(
+                    width=450,
+                    height=350
+                )
+                text = line_chart.mark_text(
+                    align='center',
+                    baseline='bottom',
+                    dy=-5  # Ajustar la posición vertical del texto para mejor visibilidad
+                ).encode(
+                    text='registros:Q'
+                )
+                chart = (line_chart + text)
+                st.altair_chart(chart)
+
+
+
+
+
+        # 6.2 Display a line chart for the number of consultations by year
+        # Assuming df_filtered contains a column 'Fecha_de_atención'
+        with col2:
+            st.markdown('##### Atención por Mes')
+            consultations_by_month = filtered_df.groupby('month').size().reset_index(name='registros')
+            line_chart = alt.Chart(consultations_by_month).mark_line(point=True).encode(
+                x=alt.X('month', title='Mes', axis=alt.Axis(format='d')),  
+                y=alt.Y('registros:Q', title='Atendidos')
+            ).properties(
+                width=450,
+                height=350
+            )
+
+            # Añadir etiquetas de texto
+            text = line_chart.mark_text(
+                align='left',
+                baseline='middle',
+                dx=5,  # Ajuste horizontal
+                dy=-5  # Ajuste vertical
+            ).encode(
+                text='registros:Q',  # Usar el valor de 'registros' como texto
+                x='month',  # Posicionar la etiqueta en el mismo eje x que los puntos
+                y='registros:Q',  # Posicionar la etiqueta en la misma altura que los puntos
+            )
+
+            chart_with_labels = line_chart + text
+            st.altair_chart(chart_with_labels)
+
+
+
+
+            # GRÁFICOS BÁSICOS (DEMOGRÁFICOS)
+
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            st.markdown('##### Población por Sexo')
+            tipo_poblacion_counts = filtered_df['Sexo'].value_counts().reset_index()
+            tipo_poblacion_counts.columns = ['Sexo', 'Count']
+            fig = px.pie(tipo_poblacion_counts, values='Count', names='Sexo', width=300, height=350, color_discrete_sequence=color_scale_10)
+            st.plotly_chart(fig)
+
+        with col2:
+            st.markdown('##### Población por Nacionalidad')
+            tipo_poblacion_counts = filtered_df['Nacionalidad'].value_counts().reset_index()
+            tipo_poblacion_counts.columns = ['Nacionalidad', 'Count']
+            fig = px.pie(tipo_poblacion_counts, values='Count', names='Nacionalidad', width=300, height=350, color_discrete_sequence=color_scale_10)
+            st.plotly_chart(fig)
+        with col3:
+            st.markdown('##### Población por Tipo de Población')
+            tipo_poblacion_counts = filtered_df['Tipo_de_poblacion'].value_counts().reset_index()
+            tipo_poblacion_counts.columns = ['Tipo_de_poblacion', 'Count']
+            fig = px.pie(tipo_poblacion_counts, values='Count', names='Tipo_de_poblacion', width=300, height=350, color_discrete_sequence=color_scale_10)
+            st.plotly_chart(fig)
+
+
+
+        st.markdown("""
+            <div style="background-color:#66c2e5; padding:1px; border-radius:5px; margin-top:1px; margin-bottom:20px;">
+                <h4 style="color:black; text-align:center; margin:0;">Orientación</h4>
+            </div>
+        """, unsafe_allow_html=True)
+
+        col1, col2, col3= st.columns(3)
+        with col1:
+            st.markdown('##### Orientacion')
+            country_consultation_counts = filtered_df['Orientacion'].value_counts().reset_index()
+            country_consultation_counts.columns = ['Orientacion', 'Consultation_Count']
+            country_consultation_counts_sorted = country_consultation_counts.sort_values(by='Consultation_Count', ascending=False)
+
+            if not country_consultation_counts_sorted.empty:
+                st.dataframe(country_consultation_counts_sorted,
+                            column_order=("Orientacion", "Consultation_Count"),
+                            hide_index=True,
+                            width=None,
+                            column_config={
+                                "Orientacion": st.column_config.TextColumn(
+                                    "Orientación",
+                                ),
+                                "Consultation_Count": st.column_config.ProgressColumn(
+                                    "Cantidad de Personas",
+                                    format="%d",
+                                    min_value=0,
+                                    max_value=country_consultation_counts_sorted['Consultation_Count'].max()
+                                )}
+                            )
+        with col2:
+            st.markdown('##### Orientacion_TM_INM')
+            country_consultation_counts = filtered_df['Orientacion_TM_INM'].value_counts().reset_index()
+            country_consultation_counts.columns = ['Orientacion_TM_INM', 'Consultation_Count']
+            country_consultation_counts_sorted = country_consultation_counts.sort_values(by='Consultation_Count', ascending=False)
+
+            if not country_consultation_counts_sorted.empty:
+                st.dataframe(country_consultation_counts_sorted,
+                            column_order=("Orientacion_TM_INM", "Consultation_Count"),
+                            hide_index=True,
+                            width=None,
+                            column_config={
+                                "Orientacion_TM_INM": st.column_config.TextColumn(
+                                    "Orientacion_TM_INM",
+                                ),
+                                "Consultation_Count": st.column_config.ProgressColumn(
+                                    "Cantidad de Personas",
+                                    format="%d",
+                                    min_value=0,
+                                    max_value=country_consultation_counts_sorted['Consultation_Count'].max()
+                                )}
+                            )
+            
+        with col3:
+            st.markdown('##### Orientacion General')
+            country_consultation_counts = filtered_df['Orientacion_General'].value_counts().reset_index()
+            country_consultation_counts.columns = ['Orientacion_General', 'Consultation_Count']
+            country_consultation_counts_sorted = country_consultation_counts.sort_values(by='Consultation_Count', ascending=False)
+
+            if not country_consultation_counts_sorted.empty:
+                st.dataframe(country_consultation_counts_sorted,
+                            column_order=("Orientacion_General", "Consultation_Count"),
+                            hide_index=True,
+                            width=None,
+                            column_config={
+                                "Orientacion_General": st.column_config.TextColumn(
+                                    "Orientación",
+                                ),
+                                "Consultation_Count": st.column_config.ProgressColumn(
+                                    "Cantidad de Personas",
+                                    format="%d",
+                                    min_value=0,
+                                    max_value=country_consultation_counts_sorted['Consultation_Count'].max()
+                                )}
+                            )
+
+        st.markdown("""
+            <div style="background-color:#66c2e5; padding:1px; border-radius:5px; margin-top:1px; margin-bottom:20px;">
+                <h4 style="color:black; text-align:center; margin:0;">PRCR</h4>
+            </div>
+        """, unsafe_allow_html=True)
+
+        col1, col2, col3= st.columns(3)
+        with col1:
+            st.markdown('##### PRCR')
+            country_consultation_counts = filtered_df['PRCR'].value_counts().reset_index()
+            country_consultation_counts.columns = ['PRCR', 'Consultation_Count']
+            country_consultation_counts_sorted = country_consultation_counts.sort_values(by='Consultation_Count', ascending=False)
+
+            if not country_consultation_counts_sorted.empty:
+                st.dataframe(country_consultation_counts_sorted,
+                            column_order=("PRCR", "Consultation_Count"),
+                            hide_index=True,
+                            width=None,
+                            column_config={
+                                "PRCR": st.column_config.TextColumn(
+                                    "PRCR",
+                                ),
+                                "Consultation_Count": st.column_config.ProgressColumn(
+                                    "Cantidad de Personas",
+                                    format="%d",
+                                    min_value=0,
+                                    max_value=country_consultation_counts_sorted['Consultation_Count'].max()
+                                )}
+                            )
+        with col2:
+            st.markdown('##### PRCR_TM_INM')
+            country_consultation_counts = filtered_df['PRCR_TM_INM'].value_counts().reset_index()
+            country_consultation_counts.columns = ['PRCR_TM_INM', 'Consultation_Count']
+            country_consultation_counts_sorted = country_consultation_counts.sort_values(by='Consultation_Count', ascending=False)
+
+            if not country_consultation_counts_sorted.empty:
+                st.dataframe(country_consultation_counts_sorted,
+                            column_order=("PRCR_TM_INM", "Consultation_Count"),
+                            hide_index=True,
+                            width=None,
+                            column_config={
+                                "PRCR_TM_INM": st.column_config.TextColumn(
+                                    "PRCR_TM_INM",
+                                ),
+                                "Consultation_Count": st.column_config.ProgressColumn(
+                                    "Cantidad de Personas",
+                                    format="%d",
+                                    min_value=0,
+                                    max_value=country_consultation_counts_sorted['Consultation_Count'].max()
+                                )}
+                            )
+            
+        with col3:
+            st.markdown('##### PRCR COMAR')
+            country_consultation_counts = filtered_df['PRCR_COMAR'].value_counts().reset_index()
+            country_consultation_counts.columns = ['PRCR_COMAR', 'Consultation_Count']
+            country_consultation_counts_sorted = country_consultation_counts.sort_values(by='Consultation_Count', ascending=False)
+
+            if not country_consultation_counts_sorted.empty:
+                st.dataframe(country_consultation_counts_sorted,
+                            column_order=("PRCR_COMAR", "Consultation_Count"),
+                            hide_index=True,
+                            width=None,
+                            column_config={
+                                "PRCR_COMAR": st.column_config.TextColumn(
+                                    "PRCR_COMAR",
+                                ),
+                                "Consultation_Count": st.column_config.ProgressColumn(
+                                    "Cantidad de Personas",
+                                    format="%d",
+                                    min_value=0,
+                                    max_value=country_consultation_counts_sorted['Consultation_Count'].max()
+                                )}
+                            )
+
+        col1, col2, col3= st.columns(3)
+        with col1:
+            st.markdown('#####  PRCR General')
+            country_consultation_counts = filtered_df['PRCR_General'].value_counts().reset_index()
+            country_consultation_counts.columns = ['PRCR_General', 'Consultation_Count']
+            country_consultation_counts_sorted = country_consultation_counts.sort_values(by='Consultation_Count', ascending=False)
+
+            if not country_consultation_counts_sorted.empty:
+                st.dataframe(country_consultation_counts_sorted,
+                            column_order=("PRCR_General", "Consultation_Count"),
+                            hide_index=True,
+                            width=None,
+                            column_config={
+                                "PRCR_General": st.column_config.TextColumn(
+                                    "PRCR_General",
+                                ),
+                                "Consultation_Count": st.column_config.ProgressColumn(
+                                    "Cantidad de Personas",
+                                    format="%d",
+                                    min_value=0,
+                                    max_value=country_consultation_counts_sorted['Consultation_Count'].max()
+                                )}
+                            )
+        with col2:
+            st.markdown('##### PRCR Exp General')
+            country_consultation_counts = filtered_df['PRCR_Exp_General'].value_counts().reset_index()
+            country_consultation_counts.columns = ['PRCR_Exp_General', 'Consultation_Count']
+            country_consultation_counts_sorted = country_consultation_counts.sort_values(by='Consultation_Count', ascending=False)
+
+            if not country_consultation_counts_sorted.empty:
+                st.dataframe(country_consultation_counts_sorted,
+                            column_order=("PRCR_Exp_General", "Consultation_Count"),
+                            hide_index=True,
+                            width=None,
+                            column_config={
+                                "PRCR_Exp_General": st.column_config.TextColumn(
+                                    "PRCR_Exp_General",
+                                ),
+                                "Consultation_Count": st.column_config.ProgressColumn(
+                                    "Cantidad de Personas",
+                                    format="%d",
+                                    min_value=0,
+                                    max_value=country_consultation_counts_sorted['Consultation_Count'].max()
+                                )}
+                            )
+            
+        with col3:
+            st.markdown('##### PRCR Otros')
+            country_consultation_counts = filtered_df['PRCR_Otros'].value_counts().reset_index()
+            country_consultation_counts.columns = ['PRCR_Otros', 'Consultation_Count']
+            country_consultation_counts_sorted = country_consultation_counts.sort_values(by='Consultation_Count', ascending=False)
+
+            if not country_consultation_counts_sorted.empty:
+                st.dataframe(country_consultation_counts_sorted,
+                            column_order=("PRCR_Otros", "Consultation_Count"),
+                            hide_index=True,
+                            width=None,
+                            column_config={
+                                "PRCR_Otros": st.column_config.TextColumn(
+                                    "PRCR_Otros",
+                                ),
+                                "Consultation_Count": st.column_config.ProgressColumn(
+                                    "Cantidad de Personas",
+                                    format="%d",
+                                    min_value=0,
+                                    max_value=country_consultation_counts_sorted['Consultation_Count'].max()
+                                )}
+                            )
+
+
+
+
+
+
 
 
 
